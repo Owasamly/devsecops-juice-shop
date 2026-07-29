@@ -18,3 +18,26 @@ jobs:
               uses: trufflesecurity/trufflehog@main
               with:
                 extra_args: --only-verified
+    semgrep-sast-scan:
+        name: SAST Scan (Semgrep)
+        runs-on: ubuntu-latest
+        container:
+            image: semgrep/semgrep
+
+        steps:
+            - name: checkout code repositroy
+              uses: actions/checkout@v4
+              
+            - name: Execute Semgrep Scan
+              run: |
+                    semgrep scan \
+                    --config auto \
+                    --json \
+                    --output semgrep-results.json .
+
+            - name: Save semgrep report artifact
+              if: always()
+              uses: actions/upload-artifact@v4
+              with:
+                name: semgrep-sast-report
+                path: semgrep-results.json
