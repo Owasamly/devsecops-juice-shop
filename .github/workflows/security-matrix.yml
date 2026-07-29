@@ -5,6 +5,10 @@ on:
     pull_request:
         branches: [ "main" , "master"  ]
     workflow_dispatch:
+
+permissions:
+    contents: read
+    security-events: write
 jobs:
     trufflehog-secrets-scan:
         name: Secret Detection (TruffleHog)
