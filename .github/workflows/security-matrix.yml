@@ -1,9 +1,10 @@
 name: CI Security Scanning Matrix
 on: 
     push:
-        branches: [ "main" , "master" , "feature/*" ]
+        branches: [ "main" , "master" ]
     pull_request:
-        branches: [ "main" , "master" , "feature/*" ]
+        branches: [ "main" , "master"  ]
+    workflow_dispatch:
 jobs:
     trufflehog-secrets-scan:
         name: Secret Detection (TruffleHog)
