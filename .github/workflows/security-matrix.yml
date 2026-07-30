@@ -11,31 +11,23 @@ permissions:
     security-events: write
 jobs:
     trufflehog-secrets-scan:
-      name: Secret Detection (TruffleHog)
-      runs-on: ubuntu-latest
+     name: Secret Detection (TruffleHog)
+     runs-on: ubuntu-latest
 
-      steps:
+     steps:
       - name: Checkout code repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
       - name: Run TruffleHog OSS Scanner
-        run: |
-          # 1. Initialize a valid empty SARIF fallback
-          echo '{"version": "2.1.0", "$schema": "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json", "runs": []}' > trufflehog-results.sarif
-
-          # 2. Run TruffleHog container and write directly to file
-          docker run --rm -v "$(pwd):/pwd" trufflesecurity/trufflehog:latest \
-            git file:///. \
-            --only-verified \
-            --no-update \
-            --format sarif > temp-results.json || true
-
-          # 3. Only overwrite if output is valid JSON
-          if grep -q "^{" temp-results.json 2>/dev/null; then
-            mv temp-results.json trufflehog-results.sarif
-          fi
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: ./
+          base: "" # Clear git base so it doesn't try diff scanning
+          head: "" 
+          extra_args: filesystem --only-verified --format=sarif --out=trufflehog-results.sarif
+        continue-on-error: true
 
       - name: Upload TruffleHog Sarif report to Github Security
         uses: github/codeql-action/upload-sarif@v4
@@ -43,7 +35,6 @@ jobs:
         with:
           sarif_file: trufflehog-results.sarif
           category: trufflehog-secrets
-
 
     semgrep-sast-scan:
         name: SAST Scan (Semgrep)
