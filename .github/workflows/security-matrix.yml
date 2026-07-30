@@ -21,16 +21,10 @@ jobs:
                 fetch-depth: 0
 
             - name: Run TruffleHog OSS Scanner
-              run: |
-                   docker run --rm -v "$(pwd)" trufflesecurity/trufflehog:latest \
-                   git file:///. \
-                   --only-verified \
-                   -- format sarif > trufflehog-results.sarif || true
-
-                   if [ -s trufflehog-results.sarif ]; then
-                      echo '{"version": "2.1.0", "$schema": "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json", "runs": []}' > trufflehog-results.sarif
-               
-                   fi
+              uses: trufflesecurity/trufflehog-action@main
+              with:
+                head: ${{ github.sha }}
+                extra_args: --only-verified --format=sarif
               continue-on-error: true
 
             - name: Upload TruffleHog Sarif report to Github Security
