@@ -20,22 +20,27 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Run TruffleHog OSS Scanner
-        uses: trufflesecurity/trufflehog@main
-        with:
-          path: ./
-          base: "" # Clear git base so it doesn't try diff scanning
-          head: "" 
-          extra_args: filesystem --only-verified --format=sarif --out=trufflehog-results.sarif
+      # 1. Install official TruffleHog binary on the runner
+      - name: Install TruffleHog
+        run: |
+          curl -sSFL https://raw.githubusercontent.com/trufflesecurity/trufflehog/main/scripts/install.sh | sh -s -- -b /usr/local/bin
+
+      # 2. Run filesystem scan directly to SARIF
+      - name: Run TruffleHog Scan
+        run: |
+          trufflehog filesystem . \
+            --only-verified \
+            --format=sarif \
+            --out=trufflehog-results.sarif
         continue-on-error: true
 
+      # 3. Upload SARIF report to GitHub Security
       - name: Upload TruffleHog Sarif report to Github Security
         uses: github/codeql-action/upload-sarif@v4
         if: always()
         with:
           sarif_file: trufflehog-results.sarif
           category: trufflehog-secrets
-
     semgrep-sast-scan:
         name: SAST Scan (Semgrep)
         runs-on: ubuntu-latest
