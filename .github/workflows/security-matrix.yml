@@ -27,7 +27,7 @@ jobs:
         runs-on: ubuntu-latest
         container:
             image: semgrep/semgrep
-
+ 
         steps:
             - name: checkout code repositroy
               uses: actions/checkout@v4
