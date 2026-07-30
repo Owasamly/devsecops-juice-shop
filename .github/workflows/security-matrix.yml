@@ -21,10 +21,12 @@ jobs:
                 fetch-depth: 0
 
             - name: Run TruffleHog OSS Scanner
-              uses: trufflesecurity/trufflehog-action@main
+              uses: trufflesecurity/trufflehog@main
               with:
+                path: ./
+                base: ${{ github.event.before }}
                 head: ${{ github.sha }}
-                extra_args: --only-verified --format=sarif
+                extra_args: --only-verified --format=sarif --out=trufflehog-results.sarif
               continue-on-error: true
 
             - name: Upload TruffleHog Sarif report to Github Security
