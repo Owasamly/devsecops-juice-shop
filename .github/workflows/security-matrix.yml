@@ -20,36 +20,32 @@ jobs:
         with:
           fetch-depth: 0
 
-      # Step 1: Install TruffleHog using sudo so it lands safely in /usr/local/bin
-      - name: Install TruffleHog CLI
-        run: |
-          curl -sSFL https://raw.githubusercontent.com/trufflesecurity/trufflehog/main/scripts/install.sh | sudo sh -s -- -b /usr/local/bin
-
-      # Step 2: Run TruffleHog filesystem scan directly
+      # Step 1: Run TruffleHog container directly mounted into the workspace
       - name: Run TruffleHog Scan
         run: |
-          trufflehog filesystem . \
+          docker run --rm \
+            -v "${{ github.workspace }}:/pwd" \
+            trufflesecurity/trufflehog:latest \
+            filesystem /pwd \
             --only-verified \
             --format=sarif \
-            --out=trufflehog-results.sarif
+            --out=/pwd/trufflehog-results.sarif
         continue-on-error: true
 
-      # Step 3: Ensure SARIF file exists even if 0 secrets were found
-      - name: Verify SARIF File Exists
+      # Step 2: Ensure SARIF has valid schema structure if TruffleHog didn't write one
+      - name: Validate SARIF File
         run: |
-          if [ ! -f trufflehog-results.sarif ]; then
-            echo '{"version": "2.1.0", "$schema": "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json", "runs": []}' > trufflehog-results.sarif
+          if [ ! -f trufflehog-results.sarif ] || [ ! -s trufflehog-results.sarif ]; then
+            echo '{"version":"2.1.0","$schema":"https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json","runs":[{"tool":{"driver":{"name":"TruffleHog","version":"3.0.0"}},"results":[]}]}' > trufflehog-results.sarif
           fi
 
-      # Step 4: Upload SARIF report to GitHub Security
+      # Step 3: Upload SARIF report to GitHub Security
       - name: Upload TruffleHog Sarif report to Github Security
         uses: github/codeql-action/upload-sarif@v4
         if: always()
         with:
           sarif_file: trufflehog-results.sarif
           category: trufflehog-secrets
-    
-
 
 
     semgrep-sast-scan:
