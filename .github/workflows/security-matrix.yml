@@ -22,6 +22,15 @@ jobs:
               uses: trufflesecurity/trufflehog@main
               with:
                 extra_args: --only-verified
+
+            - name: Upload TruffleHog Sarif report to Github Security
+              uses: github/codeql-action/upload-sarif@v4
+              if: always()
+              with:
+                sarif_file: trufflehog-results.sarif
+                category: trufflehog-secrets
+
+                
     semgrep-sast-scan:
         name: SAST Scan (Semgrep)
         runs-on: ubuntu-latest
